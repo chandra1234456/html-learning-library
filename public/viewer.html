@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Viewer – HTML Learning Library</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/viewer.css">
+</head>
+<body>
+    <div id="auth-gate" class="auth-gate" hidden></div>
+
+    <div id="app-root" hidden>
+        <header class="site-header">
+            <a class="brand" href="index.html"><span class="brand-icon" aria-hidden="true">📚</span> HTML Learning Library</a>
+            <span class="header-spacer"></span>
+            <button id="theme-toggle" class="btn btn-icon" type="button" aria-label="Toggle dark mode">🌙</button>
+        </header>
+
+        <main>
+            <div class="state-box" id="viewer-loading"><p>Loading page...</p></div>
+            <div class="state-box" id="viewer-error" hidden>
+                <h2>⚠ Unable to open page</h2>
+                <p id="viewer-error-text"></p>
+                <a class="btn" href="index.html">← Back to library</a>
+            </div>
+
+            <article id="viewer-content" hidden>
+                <div class="viewer-actions">
+                    <a class="btn" href="index.html">← Back</a>
+                    <a class="btn" id="edit-link" href="editor.html">✏ Edit</a>
+                    <button class="btn btn-danger" id="delete-btn" type="button">🗑 Delete</button>
+                </div>
+
+                <header class="page-info">
+                    <h1 id="page-title"></h1>
+                    <p id="page-description" class="page-description"></p>
+                    <span class="category-badge" id="page-category"></span>
+                    <div class="tags" id="page-tags"></div>
+                    <p class="card-meta" id="page-dates"></p>
+                </header>
+
+                <div class="tab-bar">
+                    <div role="tablist" aria-label="View mode" class="tabs">
+                        <button role="tab" id="tab-preview" aria-controls="panel-preview" aria-selected="true" class="tab" type="button">Preview</button>
+                        <button role="tab" id="tab-code" aria-controls="panel-code" aria-selected="false" tabindex="-1" class="tab" type="button">Code</button>
+                    </div>
+                    <div class="tab-tools">
+                        <button class="btn btn-small" id="copy-btn" type="button">📋 Copy HTML</button>
+                        <button class="btn btn-small" id="fullscreen-btn" type="button">⛶ Fullscreen</button>
+                    </div>
+                </div>
+
+                <section id="panel-preview" role="tabpanel" aria-labelledby="tab-preview" class="panel">
+                    <div class="preview-frame" id="preview-frame"></div>
+                </section>
+                <section id="panel-code" role="tabpanel" aria-labelledby="tab-code" class="panel" hidden tabindex="0">
+                    <pre class="code-view"><code id="code-view"></code></pre>
+                </section>
+            </article>
+        </main>
+    </div>
+
+    <script type="module" src="js/viewer.js"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // No login: anyone who has the app's URL/config can read and write pages.
+    // Writes are still validated for shape and size.
+    match /pages/{pageId} {
+      allow read, delete: if true;
+      allow create, update: if request.resource.data.title is string
+                            && request.resource.data.title.size() > 0
+                            && request.resource.data.title.size() <= 150
+                            && request.resource.data.html is string
+                            && request.resource.data.html.size() > 0
+                            && request.resource.data.html.size() <= 950000
+                            && request.resource.data.tags is list;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

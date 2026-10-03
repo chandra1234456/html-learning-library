@@ -1,0 +1,28 @@
+/* Viewer page */
+.viewer-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.page-info { display: grid; gap: 10px; margin-bottom: 20px; }
+.page-info h1 { overflow-wrap: anywhere; }
+.page-description { margin: 0; color: var(--muted); overflow-wrap: anywhere; }
+
+.tab-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.tabs { display: inline-flex; background: var(--surface-2); border-radius: 10px; padding: 4px; }
+.tab { min-height: 40px; padding: 0 20px; font: inherit; font-weight: 600; color: var(--muted); background: transparent; border: 0; border-radius: 8px; cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--surface); color: var(--primary); box-shadow: var(--shadow); }
+.tab-tools { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.preview-frame { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.preview-frame iframe { display: block; width: 100%; height: 70vh; min-height: 420px; border: 0; background: #fff; }
+.preview-frame:fullscreen { border-radius: 0; }
+.preview-frame:fullscreen iframe { height: 100vh; }
+
+.code-view {
+    margin: 0; padding: 18px; max-height: 75vh; overflow: auto;
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: .9rem; line-height: 1.55;
+    tab-size: 4; color: var(--code-text); background: var(--code-bg);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+}
+
+@media (max-width: 600px) {
+    .preview-frame iframe { height: 60vh; min-height: 320px; }
+    .viewer-actions .btn { flex: 1 1 100px; }
+}
