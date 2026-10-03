@@ -1,9 +1,10 @@
 // Editor: create a new page or edit an existing one (?id=PAGE_ID).
-import { getDoc, addDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { addDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {
     CATEGORIES, MAX_HTML_BYTES, el, initTheme, requireUser, toast, flash, parseTags,
     friendlyError, confirmDialog, createSandboxFrame, pagesCollection, pageDoc
 } from "./common.js";
+import { getPage } from "./data.js";
 
 const $ = (id) => document.getElementById(id);
 const pageId = new URLSearchParams(location.search).get("id");
@@ -58,7 +59,7 @@ if (isEdit) {
 async function loadExistingPage() {
     $("editor-form").hidden = true;
     try {
-        const snap = await getDoc(pageDoc(pageId));
+        const snap = await getPage(pageId, { fresh: true });
         if (!snap.exists()) {
             showLoadError("This page could not be found. It may have been deleted.");
             return;

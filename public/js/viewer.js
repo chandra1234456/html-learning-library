@@ -1,9 +1,10 @@
 // Viewer: shows one page (?id=PAGE_ID) as rendered preview and as source code.
-import { getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { deleteDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {
     el, initTheme, requireUser, toast, flash, showFlash, formatDate,
     friendlyError, confirmDialog, createSandboxFrame, pageDoc
 } from "./common.js";
+import { getPage } from "./data.js";
 
 const $ = (id) => document.getElementById(id);
 const pageId = new URLSearchParams(location.search).get("id");
@@ -28,7 +29,7 @@ async function loadPage() {
         return;
     }
     try {
-        const snap = await getDoc(pageDoc(pageId));
+        const snap = await getPage(pageId);
         if (!snap.exists()) {
             showError("This page could not be found. It may have been deleted.");
             return;
@@ -46,8 +47,8 @@ function renderPage() {
     $("page-description").textContent = pageData.description || "";
     $("page-description").hidden = !pageData.description;
     $("page-category").textContent = pageData.category || "Other";
-    $("page-tags").replaceChildren(...(pageData.tags || []).map((tag, i) => el("span", { class: `tag tag-${i % 5}`, text: `#${tag}` })));
-    $("page-dates").textContent = `Created: ${formatDate(pageData.createdAt)} · Updated: ${formatDate(pageData.updatedAt)}`;
+    $("page-tags").replaceChildren(...(pageData.tags || []).map((tag) => el("span", { class: "tag", text: `#${tag}` })));
+    $("page-dates").textContent = `Updated ${formatDate(pageData.updatedAt)}`;
     $("edit-link").href = `editor.html?id=${encodeURIComponent(pageId)}`;
 
     // Source is shown with textContent (shown as text, never parsed as HTML);

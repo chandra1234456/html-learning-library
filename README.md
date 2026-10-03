@@ -1,105 +1,151 @@
-# HTML Learning Library
+# 📚 HTML Learning Library
 
-A personal web app for saving HTML pages you want to learn from. Paste HTML, preview it live, save it to **Firebase Firestore**, and later browse, search, read the source, view the rendered page, edit, copy or delete it — from any device.
+A personal web app for collecting HTML pages you want to learn from. Paste HTML, preview it live, save it to **Firebase Firestore**, then browse, search, read the source, view the rendered page, edit, copy or delete it from any device.
+
+**Live site:** <https://learning-library-c4f41.web.app>
 
 ```
-HTML page → JavaScript → Firestore → Dashboard → Viewer → sandboxed iframe → rendered HTML
+Paste HTML → Live preview → Save → Firestore → Library → Viewer (Preview / Code)
 ```
 
-Firebase Hosting serves only the app itself. Your pages are stored as **Firestore documents**, not as hosted files.
+Firebase Hosting serves only the app itself. Your pages are stored as Firestore documents, not as hosted files.
+
+---
 
 ## Features
 
-Dashboard with stats, search (title / description / category / tags), category filter, add/edit/delete, live preview editor, viewer with **Preview / Code** tabs, Copy HTML, Fullscreen preview, dark/light mode, toasts, loading skeletons, responsive layout.
+| Area | What you get |
+|---|---|
+| **Library** | Card grid of saved pages, newest-updated first, page count, category chips, search by title / description / category / tags |
+| **Editor** | Title, description, category (presets or custom), tags, large HTML editor with side-by-side live preview (stacked on mobile), `Ctrl+S` to save |
+| **Viewer** | **Preview** and **Code** tabs, 📋 Copy HTML, ⛶ Fullscreen preview, Edit, Delete |
+| **Safety** | Delete confirmation, sandboxed iframes, friendly error messages |
+| **Speed** | Local caching, so the app avoids unnecessary Firestore reads (see [Caching](#caching)) |
+| **UI** | Responsive layout, dark / light mode, toast notifications, loading skeletons |
 
-## Folder structure
+Built with plain HTML, CSS and JavaScript (ES modules). There is no build step and no framework.
+
+## Project structure
 
 ```
 html-learning-library/
-├── public/                    ← what Firebase Hosting serves
-│   ├── index.html             dashboard
-│   ├── editor.html            add / edit (editor.html?id=PAGE_ID)
-│   ├── viewer.html            read / learn (viewer.html?id=PAGE_ID)
-│   ├── css/  style.css  editor.css  viewer.css
+├── public/                     ← served by Firebase Hosting
+│   ├── index.html              library / dashboard
+│   ├── editor.html             add page  (editor.html?id=PAGE_ID to edit)
+│   ├── viewer.html             read page (viewer.html?id=PAGE_ID)
+│   ├── css/
+│   │   ├── style.css           shared styles + dashboard
+│   │   ├── editor.css
+│   │   └── viewer.css
 │   ├── js/
-│   │   ├── firebase-config.js ← YOUR Firebase config goes here
-│   │   ├── common.js          theme, toasts, login gate, dialog, sandbox iframe
-│   │   ├── app.js             dashboard logic
-│   │   ├── editor.js          editor logic
-│   │   └── viewer.js          viewer logic
+│   │   ├── firebase-config.js  Firebase config + Firestore setup
+│   │   ├── common.js           theme, toasts, dialog, sandbox iframe, Firestore paths
+│   │   ├── data.js             cached reads (list + single page)
+│   │   ├── app.js              dashboard logic
+│   │   ├── editor.js           editor logic
+│   │   └── viewer.js           viewer logic
 │   └── assets/icons/
-├── firebase.json              hosting + firestore config
-├── firestore.rules            security rules
-├── firestore.indexes.json     (no composite indexes needed)
+├── firebase.json               hosting + Firestore config
+├── firestore.rules             security rules
+├── firestore.indexes.json      (no composite indexes needed)
 └── README.md
 ```
 
-## Setup
+---
 
-### 1. Create a Firebase project
-1. Go to <https://console.firebase.google.com> → **Add project**.
-2. Name it (e.g. `html-learning-library`). Google Analytics is optional — you can turn it off.
+## Setup from scratch
 
-### 2. Create a Web App and copy its config
-1. Project overview → click the **`</>`** (Web) icon → give it a nickname.
-2. You can skip "Also set up Firebase Hosting" here (we do it with the CLI below).
-3. Copy the `firebaseConfig` values shown.
+Already deployed? Skip to [Updating the site](#updating-the-site).
 
-### 3. Put the config in the app
-Open `public/js/firebase-config.js` and replace every `YOUR_…` placeholder with the values from step 2. Until you do, the app shows a "Firebase is not configured" screen.
+### 1. Create the Firebase project and web app
+1. Open the [Firebase console](https://console.firebase.google.com) → **Add project**.
+2. Project overview → **`</>` Web** icon → register an app (skip Hosting there).
+3. Copy the `firebaseConfig` values.
 
-> These web config values are not secrets; access is controlled by the Firestore rules, not by hiding these values. Never put a service-account key or Admin SDK credentials in this project.
+### 2. Add the config
+Edit `public/js/firebase-config.js` and set `apiKey`, `authDomain`, `projectId`, `storageBucket`, `messagingSenderId`, `appId`. You don't need `measurementId` or the Analytics code.
 
-### 4. Enable Firestore
-Console → **Build → Firestore Database → Create database**. Choose a location near you and start in **production mode** (the rules from this repo are deployed in step 6).
+> These web config values identify your project to the browser. They are **not secrets**. Access is controlled by `firestore.rules`. Never put a service-account key or Admin SDK credentials in this project.
 
-### 5. Install the Firebase CLI
-```powershell
+### 3. Create the database
+Console → **Build → Firestore Database → Create database** (choose a nearby region, **Production mode**).
+Use **Firestore**, not *Realtime Database*.
+
+### 4. Install the CLI and deploy
+```bash
 npm install -g firebase-tools
 ```
-
-### 6. Initialise and deploy
-```powershell
+```bash
 cd D:\private\html-learning-library
+```
+```bash
 firebase login
+```
+```bash
 firebase init hosting
+```
+```bash
 firebase init firestore
+```
+```bash
 firebase deploy
 ```
 
-Answers during `firebase init`:
+Answers for `firebase init`:
 
-| Prompt | Choose |
+| Prompt | Answer |
 |---|---|
-| Use an existing project | Select the project you created |
-| Hosting: public directory | `public` |
-| Single-page app (rewrite all to /index.html)? | **No** |
-| Set up automatic builds with GitHub? | No |
-| Overwrite `public/index.html`? | **No** |
-| Firestore rules file | `firestore.rules` (keep) — **No** to overwrite |
-| Firestore indexes file | `firestore.indexes.json` (keep) — **No** to overwrite |
+| Project | Use an existing project → select yours |
+| Public directory | `public` |
+| Single-page app (rewrite all URLs to `/index.html`) | **No** |
+| Automatic GitHub builds | No |
+| Overwrite `public/index.html`, `firestore.rules`, `firestore.indexes.json` | **No** |
 
-`firebase deploy` publishes both the site and the Firestore rules. Your app will be at `https://YOUR_PROJECT_ID.web.app`.
+> ⚠ If you ever re-run `firebase init`, check `firebase.json` afterwards. Wrong answers can change the public directory or add a rewrite rule. It should say `"public": "public"` and contain no `"rewrites"`.
 
-## Run locally
+## Updating the site
 
-The app uses ES modules, so it must be served over HTTP (opening the file directly will not work).
+After changing any file:
 
-```powershell
+```bash
+firebase deploy --only hosting
+```
+
+After changing `firestore.rules`:
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+Hard-refresh the browser (`Ctrl+Shift+R`) to see changes straight away.
+
+## Running locally
+
+The app uses ES modules, so it must be served over HTTP. Opening the file directly will not work.
+
+```bash
 cd D:\private\html-learning-library
+```
+```bash
 firebase serve --only hosting
 ```
-or: `npx serve public`, then open the printed `http://localhost:…` URL. Local runs use your real Firebase project.
+
+Or use `npx serve public`. Open the printed `http://localhost:…` address. Local runs use your **real** Firestore data.
+
+---
 
 ## Using the app
 
-1. Click **+ Add HTML Page**, enter a title, paste HTML — the preview updates as you type.
-2. **Save Page** returns to the dashboard; **Save & Preview** opens the viewer. `Ctrl+S` also saves.
-3. On the dashboard use **Open**, **Edit**, **Delete** (with confirmation). In the viewer switch between **Preview** and **Code**, **Copy HTML**, or go **Fullscreen**.
+1. Click **+ New Page**.
+2. Enter a title, pick a category, add tags, and paste your HTML. The preview updates as you type.
+3. **Save Page** returns to the library; **Save & Preview** opens the viewer.
+4. In the library, click a card (or **Edit** / **Delete**). In the viewer, switch **Preview ↔ Code**, copy the HTML, or go fullscreen.
 
-## How the database works
+URLs: `/index.html`, `/editor.html`, `/editor.html?id=PAGE_ID`, `/viewer.html?id=PAGE_ID`.
 
-Pages live at `pages/{pageId}`:
+## How the data is stored
+
+Collection `pages`, one document per page:
 
 ```js
 {
@@ -108,25 +154,49 @@ Pages live at `pages/{pageId}`:
   category: "HTML",
   tags: ["html", "forms", "beginner"],
   html: "<!DOCTYPE html>...",
-  createdAt: serverTimestamp(),   // set once on create
+  createdAt: serverTimestamp(),   // set once when created
   updatedAt: serverTimestamp()    // refreshed on every update
 }
 ```
 
-The dashboard queries `orderBy("updatedAt", "desc")`; search and category filtering happen in the browser. A Firestore document is limited to 1 MiB, so the editor caps HTML at 900 KB.
+The library queries `orderBy("updatedAt", "desc")`. Search and category filtering run in the browser. A Firestore document is limited to 1 MiB, so the editor caps HTML at 900 KB.
 
-## Firestore rules and security (no login)
+## Caching
 
-This version has **no sign-in**, as requested. `firestore.rules` therefore allows anyone who can reach the app to read, create, edit and delete pages in `pages/`. Writes are validated (non-empty string `title` ≤150 chars, non-empty `html`, `tags` list); everything outside `pages/` is denied.
+To avoid unnecessary Firestore reads (`public/js/data.js`):
 
-- The URL and web config are not secret, so treat the library as **public**. Don't store anything private in it, and don't share the link if you don't want others to edit or delete pages.
-- **Untrusted HTML:** saved HTML is only shown in an `<iframe sandbox="allow-scripts allow-forms allow-modals allow-popups">` via `srcdoc`, without `allow-same-origin`, so it cannot reach the app's DOM or storage. The code tab and cards use `textContent`.
-- `firebase.json` sets `X-Frame-Options: DENY`.
+- Firestore's **persistent local cache** (IndexedDB, shared across tabs) stores every page the app loads or saves.
+- While the library was synced within the last **10 minutes**, the list and the viewer are served from the cache with **no network reads**.
+- When the cache is older, it is shown immediately, then refreshed in the background (stale-while-revalidate).
+- The **editor always loads the latest version** from the server so it never overwrites newer edits.
+- Saves and deletes update the cache instantly.
+- The **↻ Refresh** button forces a reload from the server. Change `SYNC_TTL_MS` in `data.js` to adjust the 10-minute window.
+- Static `.js` / `.css` files are sent with a short browser cache header (`firebase.json`).
+
+Trade-off: a change made on another device can take up to 10 minutes to appear here, unless you press Refresh.
+
+## Security
+
+This version has **no login**, so `firestore.rules` lets anyone who can reach the app read, create, edit and delete pages in `pages/`. Writes are validated (non-empty `title` ≤ 150 characters, non-empty `html` within a size limit, `tags` must be a list), and everything outside `pages/` is denied.
+
+- Treat the library as **public**: don't store private material in it, and don't share the link if you don't want others to change it.
+- **Saved HTML is untrusted.** It is only displayed inside `<iframe sandbox="allow-scripts allow-forms allow-modals allow-popups">` using `srcdoc`, **without** `allow-same-origin`, so it cannot access the app's DOM or storage. The Code tab and cards use `textContent`, never `innerHTML`. Pasted pages can still run scripts and make requests *inside* the sandbox, so only paste HTML you are comfortable running.
+- `firebase.json` adds `X-Frame-Options: DENY` so other sites cannot embed the app.
 
 ### Adding login later
-Enable Authentication in the console, store pages under `users/{uid}/pages/{pageId}`, and change the rules to `allow read, write: if request.auth != null && request.auth.uid == userId;`. The code touching Firestore paths is the two helpers at the top of `public/js/common.js`.
+1. Console → **Authentication** → enable a sign-in provider.
+2. Store pages under `users/{uid}/pages/{pageId}`. Only the two helpers at the top of `public/js/common.js` define the Firestore paths.
+3. Tighten the rules: `allow read, write: if request.auth != null && request.auth.uid == userId;`.
+4. Add a sign-in screen using `firebase-auth.js`.
 
 ## Troubleshooting
 
-- **"Firebase is not configured"**: fill in `public/js/firebase-config.js`.
-- **"Permission denied"**: run `firebase deploy --only firestore:rules`.
+| Problem | Fix |
+|---|---|
+| "Firebase is not configured" | Fill in `public/js/firebase-config.js` |
+| "Permission denied" | Run `firebase deploy --only firestore:rules` |
+| Site shows Firebase's "Welcome" page or a blank page | `firebase.json` or `public/index.html` was overwritten by `firebase init`. Check `"public": "public"` and re-deploy |
+| Changes don't appear after deploy | Hard-refresh (`Ctrl+Shift+R`) |
+| Newly added page missing on another device | Press **↻ Refresh** (see [Caching](#caching)) |
+| Page won't save | Check the title is filled in, the HTML isn't empty, and it's under 900 KB |
+| Blank page when opening `index.html` as a file | Serve it over HTTP (see [Running locally](#running-locally)) |

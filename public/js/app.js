@@ -1,22 +1,22 @@
-// Dashboard: lists the signed-in user's pages from Firestore.
-import { getDocs, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+// Dashboard: lists saved pages from Firestore.
+import { deleteDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {
-    CATEGORIES, el, initTheme, requireUser, toast, showFlash, formatDate,
+    el, initTheme, requireUser, toast, showFlash, formatDate,
     friendlyError, confirmDialog, pagesCollection, pageDoc
 } from "./common.js";
+import { listPages } from "./data.js";
 
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const $ = (id) => document.getElementById(id);
 
 let pages = [];
 
 initTheme();
 showFlash();
-requireUser(loadPages);
+requireUser(() => loadPages());
 
 $("search").addEventListener("input", render);
-$("category-filter").addEventListener("change", render);
-$("retry-btn").addEventListener("click", loadPages);
+$("retry-btn").addEventListener("click", () => loadPages(true));
+$("refresh-btn").addEventListener("click", () => loadPages(true));
 
 function showOnly(...visibleIds) {
     for (const id of ["skeletons", "cards", "empty-state", "no-results", "load-error"]) {
@@ -24,37 +24,40 @@ function showOnly(...visibleIds) {
     }
 }
 
-async function loadPages() {
-    showOnly("skeletons"); // never show the empty state before Firestore has answered
+// force=true bypasses the cache (refresh button / retry).
+async function loadPages(force = false) {
+    if (force || pages.length === 0) showOnly("skeletons"); // never show the empty state before Firestore has answered
     try {
-        // Newest-updated first. Single-field orderBy needs no composite index.
-        const snapshot = await getDocs(query(pagesCollection(), orderBy("updatedAt", "desc")));
-        pages = snapshot.docs.map((snap) => ({ id: snap.id, ...snap.data() }));
-        updateStats();
+        pages = await listPages({
+            force,
+            // Called if a stale cache was silently refreshed from the server.
+            onUpdate: (fresh) => { pages = fresh; updateCategoryFilter(); render(); }
+        });
         updateCategoryFilter();
         render();
+        if (force) toast("✓ Library refreshed");
     } catch (error) {
         $("load-error-text").textContent = friendlyError(error, "Unable to load your pages.");
         showOnly("load-error");
     }
 }
 
-function updateStats() {
-    const cutoff = Date.now() - WEEK_MS;
-    const within = (ts) => ts?.toMillis && ts.toMillis() >= cutoff;
-    $("stat-total").textContent = pages.length;
-    $("stat-categories").textContent = new Set(pages.map((p) => p.category)).size;
-    $("stat-added").textContent = pages.filter((p) => within(p.createdAt)).length;
-    $("stat-updated").textContent = pages.filter((p) => within(p.updatedAt)).length;
-}
+let activeCategory = "All";
 
+// Chips for "All" plus only the categories that actually have pages.
 function updateCategoryFilter() {
-    const select = $("category-filter");
-    const previous = select.value || "All";
-    // Preset categories plus any custom ones that exist in the data.
-    const custom = [...new Set(pages.map((p) => p.category))].filter((c) => c && !CATEGORIES.includes(c)).sort();
-    select.replaceChildren(...["All", ...CATEGORIES, ...custom].map((name) => el("option", { value: name, text: name })));
-    select.value = [...select.options].some((o) => o.value === previous) ? previous : "All";
+    const used = [...new Set(pages.map((p) => p.category || "Other"))].sort();
+    if (activeCategory !== "All" && !used.includes(activeCategory)) activeCategory = "All";
+    $("category-chips").replaceChildren(...["All", ...used].map((name) => {
+        const chip = el("button", { type: "button", class: "chip", "aria-pressed": String(name === activeCategory), text: name });
+        chip.addEventListener("click", () => {
+            activeCategory = name;
+            updateCategoryFilter();
+            render();
+        });
+        return chip;
+    }));
+    $("category-chips").hidden = used.length < 2;
 }
 
 function matches(page, term, category) {
@@ -65,9 +68,10 @@ function matches(page, term, category) {
 }
 
 function render() {
+    $("page-count").textContent = pages.length ? `${pages.length} ${pages.length === 1 ? "page" : "pages"}` : "";
     if (pages.length === 0) return showOnly("empty-state");
     const term = $("search").value.trim().toLowerCase();
-    const category = $("category-filter").value;
+    const category = activeCategory;
     const visible = pages.filter((page) => matches(page, term, category));
     if (visible.length === 0) return showOnly("no-results");
     $("cards").replaceChildren(...visible.map(buildCard));
@@ -75,20 +79,23 @@ function render() {
 }
 
 function buildCard(page) {
-    const deleteBtn = el("button", { type: "button", class: "btn btn-small btn-danger", text: "Delete" });
+    const deleteBtn = el("button", { type: "button", class: "btn btn-small btn-ghost btn-danger", text: "Delete" });
     deleteBtn.addEventListener("click", () => deletePage(page));
 
     // All user-provided text goes through textContent (via el), never innerHTML.
     return el("article", { class: "card" }, [
-        el("h2", { class: "card-title", text: `📄 ${page.title}` }),
-        el("span", { class: "category-badge", text: page.category || "Other" }),
-        el("p", { class: "card-desc", text: page.description || "No description." }),
-        el("div", { class: "tags" }, (page.tags || []).map((tag, i) => el("span", { class: `tag tag-${i % 5}`, text: `#${tag}` }))),
-        el("div", { class: "card-meta", text: `Created: ${formatDate(page.createdAt)} · Updated: ${formatDate(page.updatedAt)}` }),
-        el("div", { class: "card-actions" }, [
-            el("a", { class: "btn btn-small btn-primary", href: `viewer.html?id=${encodeURIComponent(page.id)}`, text: "Open" }),
-            el("a", { class: "btn btn-small", href: `editor.html?id=${encodeURIComponent(page.id)}`, text: "Edit" }),
-            deleteBtn
+        el("span", { class: "card-category", text: page.category || "Other" }),
+        el("h2", { class: "card-title" }, [
+            el("a", { href: `viewer.html?id=${encodeURIComponent(page.id)}`, text: page.title })
+        ]),
+        page.description ? el("p", { class: "card-desc", text: page.description }) : null,
+        (page.tags || []).length ? el("div", { class: "tags" }, page.tags.slice(0, 5).map((tag) => el("span", { class: "tag", text: `#${tag}` }))) : null,
+        el("div", { class: "card-footer" }, [
+            el("span", { class: "card-meta", text: formatDate(page.updatedAt) }),
+            el("div", { class: "card-actions" }, [
+                el("a", { class: "btn btn-small btn-ghost", href: `editor.html?id=${encodeURIComponent(page.id)}`, text: "Edit" }),
+                deleteBtn
+            ])
         ])
     ]);
 }
@@ -103,7 +110,6 @@ async function deletePage(page) {
     try {
         await deleteDoc(pageDoc(page.id));
         pages = pages.filter((p) => p.id !== page.id);
-        updateStats();
         updateCategoryFilter();
         render();
         toast("✓ Page deleted");
