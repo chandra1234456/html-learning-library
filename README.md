@@ -2,7 +2,7 @@
 
 A personal web app for collecting HTML pages you want to learn from. Paste HTML, preview it live, save it to **Firebase Firestore**, then browse, search, read the source, view the rendered page, edit, copy or delete it from any device.
 
-**Live site:** <https://learning-library-c4f41.web.app>
+**Live sites:** Firebase Hosting <https://learning-library-c4f41.web.app> · GitHub Pages <https://chandra1234456.github.io/html-learning-library/>
 
 ```
 Paste HTML → Live preview → Save → Firestore → Library → Viewer (Preview / Code)
@@ -119,6 +119,12 @@ firebase deploy --only firestore:rules
 
 Hard-refresh the browser (`Ctrl+Shift+R`) to see changes straight away.
 
+## Publishing to GitHub Pages
+
+The workflow `.github/workflows/pages.yml` publishes the `public/` folder on every push to `main`. Both sites use the same Firestore data.
+
+One-time setup: GitHub repo → **Settings → Pages → Build and deployment → Source: GitHub Actions**. Then push to `main` (or run the workflow from the **Actions** tab). The site appears at `https://<your-username>.github.io/html-learning-library/`.
+
 ## Running locally
 
 The app uses ES modules, so it must be served over HTTP. Opening the file directly will not work.
@@ -171,7 +177,7 @@ To avoid unnecessary Firestore reads (`public/js/data.js`):
 - The **editor always loads the latest version** from the server so it never overwrites newer edits.
 - Saves and deletes update the cache instantly.
 - The **↻ Refresh** button forces a reload from the server. Change `SYNC_TTL_MS` in `data.js` to adjust the 10-minute window.
-- Static `.js` / `.css` files are sent with a short browser cache header (`firebase.json`).
+- Static `.html` / `.js` / `.css` files are sent with `Cache-Control: no-cache`, so browsers re-check them on every visit (cheap `304` responses) and never run a stale mix of old and new files.
 
 Trade-off: a change made on another device can take up to 10 minutes to appear here, unless you press Refresh.
 
@@ -198,5 +204,6 @@ This version has **no login**, so `firestore.rules` lets anyone who can reach th
 | Site shows Firebase's "Welcome" page or a blank page | `firebase.json` or `public/index.html` was overwritten by `firebase init`. Check `"public": "public"` and re-deploy |
 | Changes don't appear after deploy | Hard-refresh (`Ctrl+Shift+R`) |
 | Newly added page missing on another device | Press **↻ Refresh** (see [Caching](#caching)) |
+| Works in one browser but not another | Hard-refresh (`Ctrl+Shift+R`), try an Incognito window, then disable ad-blocker / privacy extensions for the site (they can block `firestore.googleapis.com`), and clear the site's data in Chrome (Settings → Privacy → Site settings → View permissions and data) |
 | Page won't save | Check the title is filled in, the HTML isn't empty, and it's under 900 KB |
 | Blank page when opening `index.html` as a file | Serve it over HTTP (see [Running locally](#running-locally)) |

@@ -38,7 +38,9 @@ if (isFirebaseConfigured) {
         // Persistent IndexedDB cache shared across tabs: pages already loaded
         // are kept on the device and reused instead of being re-downloaded.
         db = initializeFirestore(app, {
-            localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+            localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+            // Fall back to long-polling when WebSockets/streaming are blocked (proxies, extensions, some networks).
+            experimentalAutoDetectLongPolling: true
         });
     } catch {
         db = getFirestore(app); // e.g. private mode: fall back to the in-memory cache

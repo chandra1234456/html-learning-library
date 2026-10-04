@@ -1,10 +1,11 @@
 // Viewer: shows one page (?id=PAGE_ID) as rendered preview and as source code.
 import { deleteDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {
-    el, initTheme, requireUser, toast, flash, showFlash, formatDate,
+    el, categoryHue, initTheme, requireUser, toast, flash, showFlash, formatDate,
     friendlyError, confirmDialog, createSandboxFrame, pageDoc
 } from "./common.js";
 import { getPage } from "./data.js";
+import { highlightHtml } from "./highlight.js";
 
 const $ = (id) => document.getElementById(id);
 const pageId = new URLSearchParams(location.search).get("id");
@@ -46,14 +47,16 @@ function renderPage() {
     $("page-title").textContent = pageData.title;
     $("page-description").textContent = pageData.description || "";
     $("page-description").hidden = !pageData.description;
+    const hue = categoryHue(pageData.category || "Other");
+    $("page-info").style.setProperty("--hue", hue);
     $("page-category").textContent = pageData.category || "Other";
     $("page-tags").replaceChildren(...(pageData.tags || []).map((tag) => el("span", { class: "tag", text: `#${tag}` })));
     $("page-dates").textContent = `Updated ${formatDate(pageData.updatedAt)}`;
     $("edit-link").href = `editor.html?id=${encodeURIComponent(pageId)}`;
 
-    // Source is shown with textContent (shown as text, never parsed as HTML);
+    // Source is shown as highlighted text nodes (never parsed as HTML);
     // the rendered view lives in a sandboxed iframe.
-    $("code-view").textContent = pageData.html || "";
+    $("code-view").replaceChildren(highlightHtml(pageData.html || ""));
     $("preview-frame").replaceChildren(createSandboxFrame(pageData.html || "", pageData.title));
 
     $("viewer-loading").hidden = true;

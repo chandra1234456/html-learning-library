@@ -11,6 +11,17 @@ export const MAX_HTML_BYTES = 900 * 1024;
 export const pagesCollection = () => collection(db, "pages");
 export const pageDoc = (pageId) => doc(db, "pages", pageId);
 
+/* ---------- Category colours ---------- */
+const CATEGORY_HUES = { HTML: 350, CSS: 215, JavaScript: 48, Firebase: 28, "Web Development": 170, Programming: 275, Other: 230 };
+
+// Each category has a colour (HSL hue) used for card accents, tags and chips.
+export function categoryHue(name = "Other") {
+    if (name in CATEGORY_HUES) return CATEGORY_HUES[name];
+    let hash = 0;
+    for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) % 360;
+    return hash;
+}
+
 /* ---------- Small DOM helper ---------- */
 export function el(tag, options = {}, children = []) {
     const node = document.createElement(tag);
