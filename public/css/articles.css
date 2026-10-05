@@ -1,0 +1,4 @@
+/* Saved articles page */
+.page-heading { font-size: clamp(1.3rem, 3vw, 1.7rem); letter-spacing: -.02em; }
+.article-card .card-title a { overflow-wrap: anywhere; }
+.article-url { margin: 0; font-size: .82rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

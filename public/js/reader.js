@@ -4,9 +4,8 @@
 // cross-origin fetches, so a static app can't load them directly. The article
 // text is fetched through the free r.jina.ai reader service, which returns the
 // page as Markdown; markdown.js then renders it safely.
-import { setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { el, initTheme, requireUser, toast, friendlyError, formatDate, articleDoc, confirmDialog } from "./common.js";
-import { listArticles } from "./data.js";
+import { setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { el, initTheme, requireUser, toast, friendlyError, articleDoc } from "./common.js";
 import { renderMarkdown } from "./markdown.js";
 
 const $ = (id) => document.getElementById(id);
@@ -17,7 +16,6 @@ const FETCH_TIMEOUT_MS = 40000;
 let currentUrl = "";
 let webFrameLoaded = false;
 let prefs = { size: 1.1, serif: false, full: true };
-let saved = [];
 
 initTheme();
 
@@ -28,7 +26,6 @@ const writeJson = (key, value) => { try { localStorage.setItem(key, JSON.stringi
 function init() {
     prefs = { ...prefs, ...readJson(PREFS_KEY, {}) };
     applyPrefs();
-    loadSaved();
 
     $("url-form").addEventListener("submit", (event) => {
         event.preventDefault();
@@ -39,7 +36,6 @@ function init() {
     $("font-up").addEventListener("click", () => changeSize(0.08));
     $("font-down").addEventListener("click", () => changeSize(-0.08));
     $("width-toggle").addEventListener("click", () => { prefs.full = !prefs.full; applyPrefs(); });
-    $("toggle-saved").addEventListener("click", toggleSaved);
     $("font-toggle").addEventListener("click", () => { prefs.serif = !prefs.serif; applyPrefs(); });
     $("copy-link").addEventListener("click", copyShareLink);
     setupTabs();
@@ -214,7 +210,7 @@ function setupTabs() {
     }
 }
 
-/* ---------- Saved articles (Firestore collection "articles") ---------- */
+/* ---------- Save to the "Saved" list (Firestore collection "articles") ---------- */
 // The document id is a hash of the URL, so reading the same article again updates one document.
 async function articleId(url) {
     try {
@@ -227,63 +223,23 @@ async function articleId(url) {
 
 async function saveArticle(url, title) {
     try {
-        const id = await articleId(url);
-        const existing = saved.find((item) => item.id === id);
-        await setDoc(articleDoc(id), {
-            url,
-            title: title.slice(0, 400),
-            host: new URL(url).hostname.replace(/^www\./, ""),
-            savedAt: existing?.savedAt ?? serverTimestamp(), // keep the original save date
-            lastReadAt: serverTimestamp()
-        }, { merge: true });
-        await loadSaved(true);
+        const ref = articleDoc(await articleId(url));
+        const cleanTitle = title.slice(0, 400);
+        try {
+            await updateDoc(ref, { title: cleanTitle, lastReadAt: serverTimestamp() }); // already saved: keep original savedAt
+        } catch (error) {
+            if (error?.code !== "not-found" && error?.code !== "permission-denied") throw error; // missing doc: rules may report either
+            await setDoc(ref, {
+                url,
+                title: cleanTitle,
+                host: new URL(url).hostname.replace(/^www./, ""),
+                savedAt: serverTimestamp(),
+                lastReadAt: serverTimestamp()
+            });
+        }
     } catch (error) {
         console.error(error);
         toast("⚠ Article opened, but it couldn't be saved to your list", "warning");
-    }
-}
-
-async function loadSaved(force = false) {
-    try {
-        saved = await listArticles({ force, onUpdate: (fresh) => { saved = fresh; renderSaved(); } });
-        renderSaved();
-    } catch (error) {
-        console.error(error); // the reader still works without the saved list
-    }
-}
-
-function toggleSaved() {
-    const list = $("saved-list");
-    list.hidden = !list.hidden;
-    $("toggle-saved").textContent = list.hidden ? "Show" : "Hide";
-    $("toggle-saved").setAttribute("aria-expanded", String(!list.hidden));
-}
-
-function renderSaved() {
-    $("saved").hidden = saved.length === 0;
-    $("saved-count").textContent = saved.length;
-    $("saved-list").replaceChildren(...saved.map((item) => {
-        const open = el("button", { type: "button", class: "saved-open", title: item.url }, [
-            el("span", { class: "saved-title", text: item.title || item.url }),
-            el("span", { class: "saved-meta", text: `${item.host || new URL(item.url).hostname} · ${formatDate(item.lastReadAt)}` })
-        ]);
-        open.addEventListener("click", () => { $("url-input").value = item.url; openArticle(item.url); });
-        const remove = el("button", { type: "button", class: "btn btn-small btn-ghost btn-danger saved-remove", "aria-label": `Remove ${item.title}`, text: "✕" });
-        remove.addEventListener("click", () => removeArticle(item));
-        return el("div", { class: "saved-item" }, [open, remove]);
-    }));
-}
-
-async function removeArticle(item) {
-    const ok = await confirmDialog({ title: "Remove saved article?", detail: item.title, message: "It will be removed from your saved list.", confirmLabel: "Remove" });
-    if (!ok) return;
-    try {
-        await deleteDoc(articleDoc(item.id));
-        saved = saved.filter((a) => a.id !== item.id);
-        renderSaved();
-        toast("✓ Article removed");
-    } catch (error) {
-        toast(`⚠ ${friendlyError(error, "Unable to remove article.")}`, "error");
     }
 }
 

@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>HTML Learning Library</title>
+    <title>Saved Articles – HTML Learning Library</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/articles.css">
 </head>
 <body>
     <div id="auth-gate" class="auth-gate" hidden></div>
@@ -16,33 +17,33 @@
         <header class="site-header">
             <a class="brand" href="index.html"><span class="brand-icon" aria-hidden="true">📚</span> HTML Learning Library</a>
             <div class="search-box">
-                <input id="search" type="search" aria-label="Search pages" placeholder="Search title, description, category, tags…" autocomplete="off">
+                <input id="search" type="search" aria-label="Search saved articles" placeholder="Search saved articles…" autocomplete="off">
             </div>
+            <a class="btn btn-ghost" href="index.html">Library</a>
             <a class="btn btn-ghost" href="reader.html">📖 Reader</a>
-            <a class="btn btn-ghost" href="articles.html">🔖 Saved</a>
             <button id="theme-toggle" class="btn btn-icon" type="button" aria-label="Toggle dark mode">🌙</button>
-            <a class="btn btn-primary" href="editor.html">+ New Page</a>
+            <a class="btn btn-primary" href="reader.html">+ Read Article</a>
         </header>
 
         <main>
             <div class="toolbar">
-                <div class="chips" id="category-chips" role="group" aria-label="Filter by category"></div>
-                <span class="count"><span id="page-count" aria-live="polite"></span> <button class="btn btn-small btn-ghost" id="refresh-btn" type="button" title="Reload from server">↻ Refresh</button></span>
+                <h1 class="page-heading">🔖 Saved articles</h1>
+                <span class="count"><span id="article-count" aria-live="polite"></span> <button class="btn btn-small btn-ghost" id="refresh-btn" type="button" title="Reload from server">↻ Refresh</button></span>
             </div>
 
-            <section id="page-list" aria-live="polite">
+            <section aria-live="polite">
                 <div class="card-grid" id="skeletons">
                     <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
                 </div>
                 <div class="card-grid" id="cards" hidden></div>
                 <div class="state-box" id="empty-state" hidden>
-                    <h2>📚 No learning pages yet.</h2>
-                    <p>Start building your personal HTML knowledge library.</p>
-                    <a class="btn btn-primary" href="editor.html">+ Add Your First Page</a>
+                    <h2>🔖 No saved articles yet.</h2>
+                    <p>Every article you open in the Reader is saved here automatically.</p>
+                    <a class="btn btn-primary" href="reader.html">📖 Read an article</a>
                 </div>
-                <div class="state-box" id="no-results" hidden><h2>No pages found.</h2></div>
+                <div class="state-box" id="no-results" hidden><h2>No articles found.</h2></div>
                 <div class="state-box" id="load-error" hidden>
-                    <h2>⚠ Unable to load pages</h2>
+                    <h2>⚠ Unable to load saved articles</h2>
                     <p id="load-error-text"></p>
                     <button class="btn" id="retry-btn" type="button">Try again</button>
                 </div>
@@ -50,6 +51,6 @@
         </main>
     </div>
 
-    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/articles.js"></script>
 </body>
 </html>

@@ -17,6 +17,7 @@
         <header class="site-header">
             <a class="brand" href="index.html"><span class="brand-icon" aria-hidden="true">📚</span> HTML Learning Library</a>
             <span class="header-spacer"></span>
+            <a class="btn btn-ghost" href="articles.html">🔖 Saved</a>
             <a class="btn btn-ghost" href="index.html">Library</a>
             <button id="theme-toggle" class="btn btn-icon" type="button" aria-label="Toggle dark mode">🌙</button>
         </header>
@@ -29,14 +30,6 @@
                     <button class="btn btn-primary" id="read-btn" type="submit">Read</button>
                 </form>
                 <p class="form-error" id="url-error" role="alert"></p>
-            </section>
-
-            <section class="saved" id="saved" hidden>
-                <div class="saved-head">
-                    <h2>Saved articles <span class="saved-count" id="saved-count"></span></h2>
-                    <button class="btn btn-small btn-ghost" id="toggle-saved" type="button" aria-expanded="true">Hide</button>
-                </div>
-                <div class="saved-list" id="saved-list"></div>
             </section>
 
             <div class="reader-loading" id="reader-loading" hidden>
