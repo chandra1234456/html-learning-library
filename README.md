@@ -153,7 +153,7 @@ URLs: `/index.html`, `/editor.html`, `/editor.html?id=PAGE_ID`, `/viewer.html?id
 
 ## How the data is stored
 
-Collection `pages`, one document per page:
+Collections: `pages` (library) and `articles` (saved reader links). Each library page is one document in `pages`:
 
 ```js
 {
@@ -190,7 +190,8 @@ Trade-off: a change made on another device can take up to 10 minutes to appear h
 - Most sites refuse to be embedded in other pages, and browsers block fetching them directly, so the article text is fetched through the free **r.jina.ai** reader service (it returns the page as Markdown). **The URL you paste is sent to that service.**
 - The Markdown is rendered by `markdown.js` with DOM APIs only (no `innerHTML`); only http(s) links and images are allowed.
 - **Reader** tab: clean layout with text-size and serif controls. **Web view** tab: loads the real site in an iframe; sites that forbid embedding will stay blank. **Open original** always works.
-- Paywalled, login-only or bot-blocking pages may fail to load. Share a reading link with `reader.html?url=<article-url>`. Recently read articles are remembered on this device only.
+- Paywalled, login-only or bot-blocking pages may fail to load. Share a reading link with `reader.html?url=<article-url>`. Every article you open is saved (URL, title, host, last-read time) to a separate Firestore collection, `articles/{hash-of-url}`, so your reading list syncs across devices (cached like the library). Remove entries with the ✕ button. The reader uses the full screen width; **↔ Full / Focus** switches to a narrower column.
+- After pulling this feature, deploy the updated rules once: `firebase deploy --only firestore:rules` (the `articles` collection is denied until you do).
 
 ## Security
 

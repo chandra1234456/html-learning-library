@@ -16,6 +16,16 @@ service cloud.firestore {
                             && request.resource.data.tags is list;
     }
 
+    // Saved reader articles (URL + title). Same no-login model as pages.
+    match /articles/{articleId} {
+      allow read, delete: if true;
+      allow create, update: if request.resource.data.url is string
+                            && request.resource.data.url.size() > 0
+                            && request.resource.data.url.size() <= 2000
+                            && request.resource.data.title is string
+                            && request.resource.data.title.size() <= 400;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

@@ -23,18 +23,20 @@
 
         <main>
             <section class="reader-hero">
-                <h1>Read any article</h1>
-                <p>Paste the link to a website or Medium article and read it here, free of clutter.</p>
                 <form id="url-form" class="url-form" novalidate>
                     <label for="url-input" class="sr-only">Article URL</label>
-                    <input id="url-input" type="url" inputmode="url" placeholder="https://medium.com/@author/article-title" autocomplete="off" required>
+                    <input id="url-input" type="url" inputmode="url" placeholder="📖  Paste a website or Medium article link…" autocomplete="off" required>
                     <button class="btn btn-primary" id="read-btn" type="submit">Read</button>
                 </form>
                 <p class="form-error" id="url-error" role="alert"></p>
-                <div class="recent" id="recent" hidden>
-                    <span class="recent-label">Recent</span>
-                    <div class="recent-list" id="recent-list"></div>
+            </section>
+
+            <section class="saved" id="saved" hidden>
+                <div class="saved-head">
+                    <h2>Saved articles <span class="saved-count" id="saved-count"></span></h2>
+                    <button class="btn btn-small btn-ghost" id="toggle-saved" type="button" aria-expanded="true">Hide</button>
                 </div>
+                <div class="saved-list" id="saved-list"></div>
             </section>
 
             <div class="reader-loading" id="reader-loading" hidden>
@@ -61,6 +63,7 @@
                     <div class="tab-tools">
                         <button class="btn btn-small" id="font-down" type="button" aria-label="Smaller text">A−</button>
                         <button class="btn btn-small" id="font-up" type="button" aria-label="Larger text">A+</button>
+                        <button class="btn btn-small" id="width-toggle" type="button" aria-pressed="true" title="Toggle full width">↔ Full</button>
                         <button class="btn btn-small" id="font-toggle" type="button" aria-pressed="false">Serif</button>
                         <button class="btn btn-small" id="copy-link" type="button">🔗 Copy link</button>
                         <a class="btn btn-small" id="open-original" target="_blank" rel="noopener noreferrer" href="#">Open original ↗</a>

@@ -10,6 +10,9 @@ export const MAX_HTML_BYTES = 900 * 1024;
 /* ---------- Firestore paths: pages/{pageId} ---------- */
 export const pagesCollection = () => collection(db, "pages");
 export const pageDoc = (pageId) => doc(db, "pages", pageId);
+// Saved reader articles live in their own collection: articles/{articleId}
+export const articlesCollection = () => collection(db, "articles");
+export const articleDoc = (articleId) => doc(db, "articles", articleId);
 
 /* ---------- Category colours ---------- */
 const CATEGORY_HUES = { HTML: 350, CSS: 215, JavaScript: 48, Firebase: 28, "Web Development": 170, Programming: 275, Other: 230 };

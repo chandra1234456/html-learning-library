@@ -4,18 +4,20 @@
 // cross-origin fetches, so a static app can't load them directly. The article
 // text is fetched through the free r.jina.ai reader service, which returns the
 // page as Markdown; markdown.js then renders it safely.
-import { el, initTheme, requireUser, toast, friendlyError } from "./common.js";
+import { setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { el, initTheme, requireUser, toast, friendlyError, formatDate, articleDoc, confirmDialog } from "./common.js";
+import { listArticles } from "./data.js";
 import { renderMarkdown } from "./markdown.js";
 
 const $ = (id) => document.getElementById(id);
 const READER_ENDPOINT = "https://r.jina.ai/";
-const RECENT_KEY = "hll-recent-articles";
 const PREFS_KEY = "hll-reader-prefs";
 const FETCH_TIMEOUT_MS = 40000;
 
 let currentUrl = "";
 let webFrameLoaded = false;
-let prefs = { size: 1.1, serif: false };
+let prefs = { size: 1.1, serif: false, full: true };
+let saved = [];
 
 initTheme();
 
@@ -26,7 +28,7 @@ const writeJson = (key, value) => { try { localStorage.setItem(key, JSON.stringi
 function init() {
     prefs = { ...prefs, ...readJson(PREFS_KEY, {}) };
     applyPrefs();
-    renderRecent();
+    loadSaved();
 
     $("url-form").addEventListener("submit", (event) => {
         event.preventDefault();
@@ -36,6 +38,8 @@ function init() {
 
     $("font-up").addEventListener("click", () => changeSize(0.08));
     $("font-down").addEventListener("click", () => changeSize(-0.08));
+    $("width-toggle").addEventListener("click", () => { prefs.full = !prefs.full; applyPrefs(); });
+    $("toggle-saved").addEventListener("click", toggleSaved);
     $("font-toggle").addEventListener("click", () => { prefs.serif = !prefs.serif; applyPrefs(); });
     $("copy-link").addEventListener("click", copyShareLink);
     setupTabs();
@@ -57,6 +61,9 @@ function applyPrefs() {
     const article = $("panel-reader");
     article.style.setProperty("--reader-size", `${prefs.size}rem`);
     article.classList.toggle("serif", prefs.serif);
+    article.classList.toggle("narrow", !prefs.full);
+    $("width-toggle").setAttribute("aria-pressed", String(prefs.full));
+    $("width-toggle").textContent = prefs.full ? "↔ Full" : "↔ Focus";
     $("font-toggle").setAttribute("aria-pressed", String(prefs.serif));
     $("font-toggle").textContent = prefs.serif ? "Sans" : "Serif";
     writeJson(PREFS_KEY, prefs);
@@ -104,7 +111,7 @@ async function openArticle(raw) {
         if (!response.ok) throw Object.assign(new Error(`HTTP ${response.status}`), { status: response.status });
         const article = parseReaderResponse(await response.text(), url);
         renderArticle(article, url);
-        saveRecent(url, article.title);
+        saveArticle(url, article.title);
         show("view");
         window.scrollTo({ top: $("reader-view").offsetTop - 80, behavior: "smooth" });
     } catch (error) {
@@ -144,7 +151,19 @@ function parseReaderResponse(text, url) {
     }
     // The article body usually repeats the title as its first heading.
     body = body.replace(/^#\s+.*\n+/, (heading) => (heading.toLowerCase().includes(title.toLowerCase().slice(0, 25)) ? "" : heading));
-    return { title: title.trim() || new URL(url).hostname, markdown: body };
+    return { title: title.trim() || new URL(url).hostname, markdown: cleanMarkdown(body) };
+}
+
+// Removes page chrome that wastes space: tiny avatars, empty links, "5 min read",
+// "--" separators and similar one-line boilerplate near the top.
+function cleanMarkdown(markdown) {
+    const text = markdown
+        .replace(/!\[[^\]]*\]\(https?:\/\/[^)\s]*resize:(?:fill|fit):\d{1,2}:\d+[^)]*\)/g, "") // small avatar images first...
+        .replace(/\[\s*\]\([^)]*\)/g, "");                                                    // ...then the now-empty links around them
+    const boilerplate = /^\s*(\d+\s*min read|Listen|Share|Follow|Member-only story|Press enter or click to view image in full size|Open in app|Sign up|Sign in)\s*$/i;
+    const bareLink = /^\s*\[?https?:\/\/\S+?\]?(\(https?:\/\/[^)]*\))?\s*$/; // a line that is only a URL (e.g. author byline link)
+    const kept = text.split("\n").filter((line, index) => !/^\s*--+\s*$/.test(line) && !(index < 40 && (boilerplate.test(line) || bareLink.test(line))));
+    return kept.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 function renderArticle({ title, markdown }, url) {
@@ -195,22 +214,77 @@ function setupTabs() {
     }
 }
 
-/* ---------- Recent + share ---------- */
-function saveRecent(url, title) {
-    const list = readJson(RECENT_KEY, []).filter((item) => item.url !== url);
-    list.unshift({ url, title });
-    writeJson(RECENT_KEY, list.slice(0, 8));
-    renderRecent();
+/* ---------- Saved articles (Firestore collection "articles") ---------- */
+// The document id is a hash of the URL, so reading the same article again updates one document.
+async function articleId(url) {
+    try {
+        const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(url));
+        return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
+    } catch {
+        return btoa(unescape(encodeURIComponent(url))).replace(/[^a-z0-9]/gi, "").slice(0, 60); // insecure-context fallback
+    }
 }
 
-function renderRecent() {
-    const list = readJson(RECENT_KEY, []);
-    $("recent").hidden = list.length === 0;
-    $("recent-list").replaceChildren(...list.map((item) => {
-        const chip = el("button", { type: "button", class: "recent-item", title: item.url, text: item.title });
-        chip.addEventListener("click", () => { $("url-input").value = item.url; openArticle(item.url); });
-        return chip;
+async function saveArticle(url, title) {
+    try {
+        const id = await articleId(url);
+        const existing = saved.find((item) => item.id === id);
+        await setDoc(articleDoc(id), {
+            url,
+            title: title.slice(0, 400),
+            host: new URL(url).hostname.replace(/^www\./, ""),
+            savedAt: existing?.savedAt ?? serverTimestamp(), // keep the original save date
+            lastReadAt: serverTimestamp()
+        }, { merge: true });
+        await loadSaved(true);
+    } catch (error) {
+        console.error(error);
+        toast("⚠ Article opened, but it couldn't be saved to your list", "warning");
+    }
+}
+
+async function loadSaved(force = false) {
+    try {
+        saved = await listArticles({ force, onUpdate: (fresh) => { saved = fresh; renderSaved(); } });
+        renderSaved();
+    } catch (error) {
+        console.error(error); // the reader still works without the saved list
+    }
+}
+
+function toggleSaved() {
+    const list = $("saved-list");
+    list.hidden = !list.hidden;
+    $("toggle-saved").textContent = list.hidden ? "Show" : "Hide";
+    $("toggle-saved").setAttribute("aria-expanded", String(!list.hidden));
+}
+
+function renderSaved() {
+    $("saved").hidden = saved.length === 0;
+    $("saved-count").textContent = saved.length;
+    $("saved-list").replaceChildren(...saved.map((item) => {
+        const open = el("button", { type: "button", class: "saved-open", title: item.url }, [
+            el("span", { class: "saved-title", text: item.title || item.url }),
+            el("span", { class: "saved-meta", text: `${item.host || new URL(item.url).hostname} · ${formatDate(item.lastReadAt)}` })
+        ]);
+        open.addEventListener("click", () => { $("url-input").value = item.url; openArticle(item.url); });
+        const remove = el("button", { type: "button", class: "btn btn-small btn-ghost btn-danger saved-remove", "aria-label": `Remove ${item.title}`, text: "✕" });
+        remove.addEventListener("click", () => removeArticle(item));
+        return el("div", { class: "saved-item" }, [open, remove]);
     }));
+}
+
+async function removeArticle(item) {
+    const ok = await confirmDialog({ title: "Remove saved article?", detail: item.title, message: "It will be removed from your saved list.", confirmLabel: "Remove" });
+    if (!ok) return;
+    try {
+        await deleteDoc(articleDoc(item.id));
+        saved = saved.filter((a) => a.id !== item.id);
+        renderSaved();
+        toast("✓ Article removed");
+    } catch (error) {
+        toast(`⚠ ${friendlyError(error, "Unable to remove article.")}`, "error");
+    }
 }
 
 async function copyShareLink() {
