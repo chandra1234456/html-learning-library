@@ -19,6 +19,7 @@ Firebase Hosting serves only the app itself. Your pages are stored as Firestore 
 | **Library** | Card grid of saved pages, newest-updated first, page count, category chips, search by title / description / category / tags |
 | **Editor** | Title, description, category (presets or custom), tags, large HTML editor with side-by-side live preview (stacked on mobile), `Ctrl+S` to save |
 | **Viewer** | **Preview** and **Code** tabs, 📋 Copy HTML, ⛶ Fullscreen preview, Edit, Delete |
+| **Reader** | Paste any article/website URL (Medium included) and read it in a clean, resizable layout, or switch to a web view (`reader.html`) |
 | **Safety** | Delete confirmation, sandboxed iframes, friendly error messages |
 | **Speed** | Local caching, so the app avoids unnecessary Firestore reads (see [Caching](#caching)) |
 | **UI** | Responsive layout, dark / light mode, toast notifications, loading skeletons |
@@ -33,6 +34,7 @@ html-learning-library/
 │   ├── index.html              library / dashboard
 │   ├── editor.html             add page  (editor.html?id=PAGE_ID to edit)
 │   ├── viewer.html             read page (viewer.html?id=PAGE_ID)
+│   ├── reader.html             read any web article from a URL
 │   ├── css/
 │   │   ├── style.css           shared styles + dashboard
 │   │   ├── editor.css
@@ -180,6 +182,15 @@ To avoid unnecessary Firestore reads (`public/js/data.js`):
 - Static `.html` / `.js` / `.css` files are sent with `Cache-Control: no-cache`, so browsers re-check them on every visit (cheap `304` responses) and never run a stale mix of old and new files.
 
 Trade-off: a change made on another device can take up to 10 minutes to appear here, unless you press Refresh.
+
+## Article reader
+
+`reader.html` lets you paste a website or Medium URL and read it inside the app.
+
+- Most sites refuse to be embedded in other pages, and browsers block fetching them directly, so the article text is fetched through the free **r.jina.ai** reader service (it returns the page as Markdown). **The URL you paste is sent to that service.**
+- The Markdown is rendered by `markdown.js` with DOM APIs only (no `innerHTML`); only http(s) links and images are allowed.
+- **Reader** tab: clean layout with text-size and serif controls. **Web view** tab: loads the real site in an iframe; sites that forbid embedding will stay blank. **Open original** always works.
+- Paywalled, login-only or bot-blocking pages may fail to load. Share a reading link with `reader.html?url=<article-url>`. Recently read articles are remembered on this device only.
 
 ## Security
 

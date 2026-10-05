@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Reader – HTML Learning Library</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/reader.css">
+</head>
+<body>
+    <div id="auth-gate" class="auth-gate" hidden></div>
+
+    <div id="app-root" hidden>
+        <header class="site-header">
+            <a class="brand" href="index.html"><span class="brand-icon" aria-hidden="true">📚</span> HTML Learning Library</a>
+            <span class="header-spacer"></span>
+            <a class="btn btn-ghost" href="index.html">Library</a>
+            <button id="theme-toggle" class="btn btn-icon" type="button" aria-label="Toggle dark mode">🌙</button>
+        </header>
+
+        <main>
+            <section class="reader-hero">
+                <h1>Read any article</h1>
+                <p>Paste the link to a website or Medium article and read it here, free of clutter.</p>
+                <form id="url-form" class="url-form" novalidate>
+                    <label for="url-input" class="sr-only">Article URL</label>
+                    <input id="url-input" type="url" inputmode="url" placeholder="https://medium.com/@author/article-title" autocomplete="off" required>
+                    <button class="btn btn-primary" id="read-btn" type="submit">Read</button>
+                </form>
+                <p class="form-error" id="url-error" role="alert"></p>
+                <div class="recent" id="recent" hidden>
+                    <span class="recent-label">Recent</span>
+                    <div class="recent-list" id="recent-list"></div>
+                </div>
+            </section>
+
+            <div class="reader-loading" id="reader-loading" hidden>
+                <div class="skeleton line-lg"></div>
+                <div class="skeleton line"></div><div class="skeleton line"></div><div class="skeleton line short"></div>
+                <p class="state-note">Fetching the article…</p>
+            </div>
+
+            <div class="state-box" id="reader-error" hidden>
+                <h2>⚠ Couldn't load this article</h2>
+                <p id="reader-error-text"></p>
+                <div class="error-actions">
+                    <a class="btn btn-primary" id="error-open" target="_blank" rel="noopener noreferrer" href="#">Open original ↗</a>
+                    <button class="btn" id="error-retry" type="button">Try again</button>
+                </div>
+            </div>
+
+            <section id="reader-view" hidden>
+                <div class="reader-toolbar">
+                    <div role="tablist" aria-label="View mode" class="tabs">
+                        <button role="tab" id="tab-reader" aria-controls="panel-reader" aria-selected="true" class="tab" type="button">Reader</button>
+                        <button role="tab" id="tab-web" aria-controls="panel-web" aria-selected="false" tabindex="-1" class="tab" type="button">Web view</button>
+                    </div>
+                    <div class="tab-tools">
+                        <button class="btn btn-small" id="font-down" type="button" aria-label="Smaller text">A−</button>
+                        <button class="btn btn-small" id="font-up" type="button" aria-label="Larger text">A+</button>
+                        <button class="btn btn-small" id="font-toggle" type="button" aria-pressed="false">Serif</button>
+                        <button class="btn btn-small" id="copy-link" type="button">🔗 Copy link</button>
+                        <a class="btn btn-small" id="open-original" target="_blank" rel="noopener noreferrer" href="#">Open original ↗</a>
+                    </div>
+                </div>
+
+                <article id="panel-reader" role="tabpanel" aria-labelledby="tab-reader" class="panel article-card">
+                    <p class="article-source" id="article-source"></p>
+                    <h1 class="article-title" id="article-title"></h1>
+                    <div class="article-body" id="article-body"></div>
+                </article>
+
+                <section id="panel-web" role="tabpanel" aria-labelledby="tab-web" class="panel" hidden>
+                    <p class="web-note">Some sites (including Medium) don't allow being shown inside other pages. If this stays blank, use <strong>Reader</strong> or <strong>Open original</strong>.</p>
+                    <div class="web-frame" id="web-frame"></div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="js/reader.js"></script>
+</body>
+</html>
