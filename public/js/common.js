@@ -2,6 +2,7 @@
 // confirmation dialog, sandboxed preview frames and error messages.
 import { db, isFirebaseConfigured } from "./firebase-config.js";
 import { collection, doc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { icon, hydrateIcons } from "./icons.js";
 
 export const CATEGORIES = ["HTML", "CSS", "JavaScript", "Firebase", "Web Development", "Programming", "Other"];
 // Firestore documents are limited to 1 MiB; leave room for the other fields.
@@ -42,6 +43,7 @@ export function el(tag, options = {}, children = []) {
 
 /* ---------- Theme ---------- */
 export function initTheme() {
+    hydrateIcons();
     let stored = null;
     try { stored = localStorage.getItem("hll-theme"); } catch { /* storage blocked */ }
     const preferred = stored || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
@@ -57,7 +59,7 @@ function applyTheme(theme) {
     document.documentElement.dataset.theme = theme;
     const button = document.getElementById("theme-toggle");
     if (button) {
-        button.textContent = theme === "dark" ? "☀️" : "🌙";
+        button.replaceChildren(icon(theme === "dark" ? "sun" : "moon"));
         button.setAttribute("aria-label", theme === "dark" ? "Switch to light mode" : "Switch to dark mode");
     }
 }

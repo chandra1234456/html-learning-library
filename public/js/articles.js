@@ -1,5 +1,6 @@
 // Saved articles: lists everything opened in the Reader; clicking one reopens it there.
 import { deleteDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { icon } from "./icons.js";
 import {
     el, initTheme, requireUser, toast, showFlash, formatDate, categoryHue,
     friendlyError, confirmDialog, articleDoc
@@ -64,7 +65,7 @@ const readerLink = (article) => `reader.html?url=${encodeURIComponent(article.ur
 
 function buildCard(article, index) {
     const host = article.host || new URL(article.url).hostname.replace(/^www\./, "");
-    const removeBtn = el("button", { type: "button", class: "btn btn-small btn-ghost btn-danger", text: "Remove" });
+    const removeBtn = el("button", { type: "button", class: "icon-btn icon-btn-danger", title: "Remove", "aria-label": `Remove ${article.title || article.url}` }, [icon("trash", 17)]);
     removeBtn.addEventListener("click", () => removeArticle(article));
 
     // User-provided text goes through textContent (via el), never innerHTML.
@@ -75,7 +76,7 @@ function buildCard(article, index) {
         el("div", { class: "card-footer" }, [
             el("span", { class: "card-meta", text: `Read ${formatDate(article.lastReadAt)}` }),
             el("div", { class: "card-actions" }, [
-                el("a", { class: "btn btn-small btn-ghost", href: article.url, target: "_blank", rel: "noopener noreferrer", text: "Original ↗" }),
+                el("a", { class: "icon-btn", href: article.url, target: "_blank", rel: "noopener noreferrer", title: "Open original", "aria-label": "Open original site" }, [icon("external", 17)]),
                 removeBtn
             ])
         ])

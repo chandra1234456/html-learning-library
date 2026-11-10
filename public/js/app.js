@@ -4,6 +4,7 @@ import {
     el, initTheme, requireUser, toast, showFlash, formatDate, categoryHue,
     friendlyError, confirmDialog, pageDoc
 } from "./common.js";
+import { icon } from "./icons.js";
 import { listPages } from "./data.js";
 
 const $ = (id) => document.getElementById(id);
@@ -14,7 +15,6 @@ let animateNextRender = true; // card entrance animation only on first display, 
 
 initTheme();
 showFlash();
-requireUser(() => loadPages());
 
 let searchTimer;
 $("search").addEventListener("input", () => {
@@ -33,26 +33,30 @@ function showOnly(...visibleIds) {
 // force=true bypasses the cache (refresh button / retry).
 async function loadPages(force = false) {
     if (force || pages.length === 0) showOnly("skeletons"); // never show the empty state before Firestore has answered
-    const spinner = $("refresh-btn");
-    spinner.disabled = true;
+    $("refresh-btn").disabled = true;
     try {
         pages = await listPages({
             force,
             // Called if a stale cache was silently refreshed from the server.
-            onUpdate: (fresh) => { pages = fresh; updateCategoryFilter(); render(); }
+            onUpdate: (fresh) => { pages = fresh; updateAll(); }
         });
-        updateCategoryFilter();
         animateNextRender = true;
-        render();
+        updateAll();
         if (force) toast("✓ Library refreshed");
     } catch (error) {
         $("load-error-text").textContent = `${friendlyError(error, "Unable to load your pages.")}${error?.code ? ` (${error.code})` : ""}`;
         showOnly("load-error");
     } finally {
-        spinner.disabled = false;
+        $("refresh-btn").disabled = false;
     }
 }
 
+function updateAll() {
+    updateCategoryFilter();
+    render();
+}
+
+/* ---------- Filter + render ---------- */
 // Chips for "All" plus only the categories that actually have pages.
 function updateCategoryFilter() {
     const used = [...new Set(pages.map((p) => p.category || "Other"))].sort();
@@ -83,7 +87,10 @@ function matches(page, term, category) {
 }
 
 function render() {
-    $("page-count").textContent = pages.length ? `${pages.length} ${pages.length === 1 ? "page" : "pages"}` : "";
+    const categories = new Set(pages.map((p) => p.category || "Other")).size;
+    $("page-count").textContent = pages.length
+        ? `${pages.length} ${pages.length === 1 ? "page" : "pages"} · ${categories} ${categories === 1 ? "category" : "categories"}`
+        : "";
     if (pages.length === 0) return showOnly("empty-state");
     const term = $("search").value.trim().toLowerCase();
     const visible = pages.filter((page) => matches(page, term, activeCategory));
@@ -96,8 +103,9 @@ function render() {
 }
 
 function buildCard(page, index) {
-    const deleteBtn = el("button", { type: "button", class: "btn btn-small btn-ghost btn-danger", text: "Delete" });
-    deleteBtn.addEventListener("click", () => deletePage(page));
+    const deleteBtn = el("button", { type: "button", class: "icon-btn icon-btn-danger", title: `Delete ${page.title}`, "aria-label": `Delete ${page.title}` }, [icon("trash", 17)]);
+    deleteBtn.addEventListener("click", () => removePage(page));
+    const editLink = el("a", { class: "icon-btn", href: `editor.html?id=${encodeURIComponent(page.id)}`, title: `Edit ${page.title}`, "aria-label": `Edit ${page.title}` }, [icon("edit", 17)]);
 
     // All user-provided text goes through textContent (via el), never innerHTML.
     return el("article", { class: "card", style: `--hue:${categoryHue(page.category || "Other")};--i:${Math.min(index, 12)}` }, [
@@ -108,16 +116,13 @@ function buildCard(page, index) {
         page.description ? el("p", { class: "card-desc", text: page.description }) : null,
         (page.tags || []).length ? el("div", { class: "tags" }, page.tags.slice(0, 5).map((tag) => el("span", { class: "tag", text: `#${tag}` }))) : null,
         el("div", { class: "card-footer" }, [
-            el("span", { class: "card-meta", text: formatDate(page.updatedAt) }),
-            el("div", { class: "card-actions" }, [
-                el("a", { class: "btn btn-small btn-ghost", href: `editor.html?id=${encodeURIComponent(page.id)}`, text: "Edit" }),
-                deleteBtn
-            ])
+            el("span", { class: "card-meta", text: `Updated ${formatDate(page.updatedAt)}` }),
+            el("div", { class: "card-actions" }, [editLink, deleteBtn])
         ])
     ]);
 }
 
-async function deletePage(page) {
+async function removePage(page) {
     const confirmed = await confirmDialog({
         title: "Delete this page?",
         detail: page.title,
@@ -127,10 +132,12 @@ async function deletePage(page) {
     try {
         await deleteDoc(pageDoc(page.id));
         pages = pages.filter((p) => p.id !== page.id);
-        updateCategoryFilter();
-        render();
+        updateAll();
         toast("✓ Page deleted");
     } catch (error) {
         toast(`⚠ ${friendlyError(error, "Unable to delete page. Please try again.")}`, "error");
     }
 }
+
+// Start last so every binding above is initialised first.
+requireUser(() => loadPages());

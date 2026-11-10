@@ -15,20 +15,31 @@
 
     <div id="app-root" hidden>
         <header class="site-header">
-            <a class="brand" href="index.html"><span class="brand-icon" aria-hidden="true">📚</span> HTML Learning Library</a>
-            <div class="search-box">
-                <input id="search" type="search" aria-label="Search saved articles" placeholder="Search saved articles…" autocomplete="off">
-            </div>
-            <a class="btn btn-ghost" href="index.html">Library</a>
-            <a class="btn btn-ghost" href="reader.html">📖 Reader</a>
-            <button id="theme-toggle" class="btn btn-icon" type="button" aria-label="Toggle dark mode">🌙</button>
-            <a class="btn btn-primary" href="reader.html">+ Read Article</a>
+            <a class="brand" href="index.html"><span class="brand-icon"><i data-icon="book" data-size="20"></i></span><span class="brand-name">HTML Learning Library</span></a>
+            <nav class="nav" aria-label="Main">
+                <a class="nav-link" href="index.html"><i data-icon="grid"></i><span>Library</span></a>
+                <a class="nav-link" href="reader.html"><i data-icon="reader"></i><span>Reader</span></a>
+                <a class="nav-link" href="articles.html" aria-current="page"><i data-icon="bookmark"></i><span>Saved</span></a>
+            </nav>
+            <span class="header-spacer"></span>
+            <button id="theme-toggle" class="btn btn-icon btn-ghost" type="button" aria-label="Toggle dark mode"></button>
+            <a class="btn btn-primary btn-new" href="editor.html"><i data-icon="plus"></i><span>New page</span></a>
         </header>
 
         <main>
+            <div class="page-head">
+                <div>
+                    <h1>Saved articles</h1>
+                    <p class="page-sub" id="article-count" aria-live="polite"></p>
+                </div>
+                <button class="btn btn-ghost btn-small" id="refresh-btn" type="button" title="Reload from server"><i data-icon="refresh" data-size="16"></i><span>Refresh</span></button>
+            </div>
+
             <div class="toolbar">
-                <h1 class="page-heading">🔖 Saved articles</h1>
-                <span class="count"><span id="article-count" aria-live="polite"></span> <button class="btn btn-small btn-ghost" id="refresh-btn" type="button" title="Reload from server">↻ Refresh</button></span>
+                <div class="search-field">
+                    <i data-icon="search"></i>
+                    <input id="search" type="search" aria-label="Search saved articles" placeholder="Search saved articles…" autocomplete="off">
+                </div>
             </div>
 
             <section aria-live="polite">
@@ -37,9 +48,10 @@
                 </div>
                 <div class="card-grid" id="cards" hidden></div>
                 <div class="state-box" id="empty-state" hidden>
-                    <h2>🔖 No saved articles yet.</h2>
+                    <div class="state-icon"><i data-icon="bookmark" data-size="32"></i></div>
+                    <h2>No saved articles yet.</h2>
                     <p>Every article you open in the Reader is saved here automatically.</p>
-                    <a class="btn btn-primary" href="reader.html">📖 Read an article</a>
+                    <a class="btn btn-primary" href="reader.html"><i data-icon="reader"></i><span>Read an article</span></a>
                 </div>
                 <div class="state-box" id="no-results" hidden><h2>No articles found.</h2></div>
                 <div class="state-box" id="load-error" hidden>

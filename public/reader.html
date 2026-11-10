@@ -15,11 +15,15 @@
 
     <div id="app-root" hidden>
         <header class="site-header">
-            <a class="brand" href="index.html"><span class="brand-icon" aria-hidden="true">📚</span> HTML Learning Library</a>
+            <a class="brand" href="index.html"><span class="brand-icon"><i data-icon="book" data-size="20"></i></span><span class="brand-name">HTML Learning Library</span></a>
+            <nav class="nav" aria-label="Main">
+                <a class="nav-link" href="index.html"><i data-icon="grid"></i><span>Library</span></a>
+                <a class="nav-link" href="reader.html" aria-current="page"><i data-icon="reader"></i><span>Reader</span></a>
+                <a class="nav-link" href="articles.html"><i data-icon="bookmark"></i><span>Saved</span></a>
+            </nav>
             <span class="header-spacer"></span>
-            <a class="btn btn-ghost" href="articles.html">🔖 Saved</a>
-            <a class="btn btn-ghost" href="index.html">Library</a>
-            <button id="theme-toggle" class="btn btn-icon" type="button" aria-label="Toggle dark mode">🌙</button>
+            <button id="theme-toggle" class="btn btn-icon btn-ghost" type="button" aria-label="Toggle dark mode"></button>
+            <a class="btn btn-primary btn-new" href="editor.html"><i data-icon="plus"></i><span>New page</span></a>
         </header>
 
         <main>
@@ -58,7 +62,7 @@
                         <button class="btn btn-small" id="font-up" type="button" aria-label="Larger text">A+</button>
                         <button class="btn btn-small" id="width-toggle" type="button" aria-pressed="true" title="Toggle full width">↔ Full</button>
                         <button class="btn btn-small" id="font-toggle" type="button" aria-pressed="false">Serif</button>
-                        <button class="btn btn-small" id="copy-link" type="button">🔗 Copy link</button>
+                        <button class="btn btn-small" id="copy-link" type="button"><i data-icon="link" data-size="16"></i><span>Copy link</span></button>
                         <a class="btn btn-small" id="open-original" target="_blank" rel="noopener noreferrer" href="#">Open original ↗</a>
                     </div>
                 </div>

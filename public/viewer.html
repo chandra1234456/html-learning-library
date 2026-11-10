@@ -15,11 +15,15 @@
 
     <div id="app-root" hidden>
         <header class="site-header">
-            <a class="brand" href="index.html"><span class="brand-icon" aria-hidden="true">📚</span> HTML Learning Library</a>
+            <a class="brand" href="index.html"><span class="brand-icon"><i data-icon="book" data-size="20"></i></span><span class="brand-name">HTML Learning Library</span></a>
+            <nav class="nav" aria-label="Main">
+                <a class="nav-link" href="index.html" aria-current="page"><i data-icon="grid"></i><span>Library</span></a>
+                <a class="nav-link" href="reader.html"><i data-icon="reader"></i><span>Reader</span></a>
+                <a class="nav-link" href="articles.html"><i data-icon="bookmark"></i><span>Saved</span></a>
+            </nav>
             <span class="header-spacer"></span>
-            <a class="btn btn-ghost" href="reader.html">📖 Reader</a>
-            <a class="btn btn-ghost" href="articles.html">🔖 Saved</a>
-            <button id="theme-toggle" class="btn btn-icon" type="button" aria-label="Toggle dark mode">🌙</button>
+            <button id="theme-toggle" class="btn btn-icon btn-ghost" type="button" aria-label="Toggle dark mode"></button>
+            <a class="btn btn-primary btn-new" href="editor.html"><i data-icon="plus"></i><span>New page</span></a>
         </header>
 
         <main>
@@ -27,14 +31,16 @@
             <div class="state-box" id="viewer-error" hidden>
                 <h2>⚠ Unable to open page</h2>
                 <p id="viewer-error-text"></p>
-                <a class="btn" href="index.html">← Back to library</a>
+                <div class="error-actions">
+                    <a class="btn" href="index.html"><i data-icon="back"></i><span>Back to library</span></a>
+                </div>
             </div>
 
             <article id="viewer-content" hidden>
                 <div class="viewer-actions">
-                    <a class="btn" href="index.html">← Back</a>
-                    <a class="btn" id="edit-link" href="editor.html">✏ Edit</a>
-                    <button class="btn btn-danger" id="delete-btn" type="button">🗑 Delete</button>
+                    <a class="btn" href="index.html"><i data-icon="back"></i><span>Back</span></a>
+                    <a class="btn" id="edit-link" href="editor.html"><i data-icon="edit"></i><span>Edit</span></a>
+                    <button class="btn btn-danger" id="delete-btn" type="button"><i data-icon="trash"></i><span>Delete</span></button>
                 </div>
 
                 <header class="page-info" id="page-info">
@@ -51,8 +57,8 @@
                         <button role="tab" id="tab-code" aria-controls="panel-code" aria-selected="false" tabindex="-1" class="tab" type="button">Code</button>
                     </div>
                     <div class="tab-tools">
-                        <button class="btn btn-small" id="copy-btn" type="button">📋 Copy HTML</button>
-                        <button class="btn btn-small" id="fullscreen-btn" type="button">⛶ Fullscreen</button>
+                        <button class="btn btn-small" id="copy-btn" type="button"><i data-icon="copy" data-size="16"></i><span>Copy HTML</span></button>
+                        <button class="btn btn-small" id="fullscreen-btn" type="button"><i data-icon="expand" data-size="16"></i><span>Fullscreen</span></button>
                     </div>
                 </div>
 
